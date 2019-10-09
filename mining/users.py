@@ -1,13 +1,65 @@
-import praw
-import json, os, re, shutil, sys
+import json
+import os
+import re
+import shutil
+import sys
 import requests
 from tqdm import tqdm
+from collections import defaultdict
+from functools import partial
 
-def save_user(username, period=None, saveloc='users/', tosave=['stats']):
-    pass
+
+def save_user(username, period=None, save_loc='users/', tosave=['subreddit', 'time', 'submission', 'comment']):
+    directory = save_loc + username + '/'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    print('user: u/' + username)
+    if 'subreddit' in tosave:
+        s = get_user_stats(username, period, 'subreddit')
+        filename = directory + 'subreddits{}.csv'.format(period if period else '')
+        with open(filename, 'w') as f:
+            f.write('subreddit,activity\n')
+            for k, v in s.items():
+                f.write('{},{}\n'.format(k, v))
+            print('Subreddit stats done!')
+
+    if 'time' in tosave:
+        s = get_user_stats(username, period, 'time')
+        filename = directory + 'time{}.csv'.format(period if period else '')
+        with open(filename, 'w') as f:
+            f.write('utc_stamp,activity\n')
+            for k, v in s.items():
+                f.write('{},{}\n'.format(k, v))
+            print('Time stats done!')
+
+    if 'submission' in tosave:
+        s = get_user_text(username, period, 'submission')
+        filename = directory + 'submissions{}.txt'.format(period if period else '')
+        with open(filename, 'w') as f:
+            while True:
+                try:
+                    f.write(next(s))
+                except StopIteration:
+                    break
+            print('Submission texts done!')
+
+    if 'comment' in tosave:
+        s = get_user_text(username, period, 'comment')
+        filename = directory + 'comments{}.txt'.format(period if period else '')
+        with open(filename, 'w') as f:
+            while True:
+                try:
+                    f.write(next(s))
+                except StopIteration:
+                    break
+            print('Comment texts done!')
+
+    if 'media' in tosave:
+        get_user_media(username, period, save_loc)
+        print('Media done!')
 
 
-def get_user_text(username, period=None, data_type='stats'):
+def get_user_stats(username, period=None, data_type='subreddit'):
     sub_address = 'https://api.pushshift.io/reddit/submission/search'
     comm_address = 'https://api.pushshift.io/reddit/comment/search'
     params = {
@@ -16,7 +68,7 @@ def get_user_text(username, period=None, data_type='stats'):
     }
     if period is not None:
         params['after'] = '{}d'.format(period)
-    if data_type == 'stats':
+    if data_type == 'subreddit':
         params['size'] = 0
         params['aggs'] = 'subreddit'
         s = requests.get(sub_address, params=params).json()['aggs']['subreddit']
@@ -25,9 +77,30 @@ def get_user_text(username, period=None, data_type='stats'):
         c = defaultdict(int, [(x['key'], x['doc_count']) for x in c])
         for k in c:
             s[k] += c[k]
-        return s
+    elif data_type == 'time':
+        params['size'] = 0
+        params['aggs'] = 'created_utc'
+        params['frequency'] = 'hour'
+        s = requests.get(sub_address, params=params).json()['aggs']['created_utc']
+        c = requests.get(comm_address, params=params).json()['aggs']['created_utc']
+        s = defaultdict(int, [(x['key'], x['doc_count']) for x in s])
+        c = defaultdict(int, [(x['key'], x['doc_count']) for x in c])
+        for k in c:
+            s[k] += c[k]
+    return s
 
-    elif data_type == 'submission':
+
+def get_user_text(username, period=None, data_type='submission'):
+    sub_address = 'https://api.pushshift.io/reddit/submission/search'
+    comm_address = 'https://api.pushshift.io/reddit/comment/search'
+    params = {
+        'author': username,
+        'size': 500,
+    }
+    if period is not None:
+        params['after'] = '{}d'.format(period)
+
+    if data_type == 'submission':
         params['fields'] = ('title', 'selftext', 'created_utc')
         titles = set()
         iteration = 1
@@ -38,12 +111,15 @@ def get_user_text(username, period=None, data_type='stats'):
             if len(r) == 0:
                 break
             for post in r:
-                title = post['title']
-                body = post['selftext'] if post['selftext'] is not None else ''
-                if title not in titles:
-                    titles.add(title)
-                    yield(title)
-                    yield(body)
+                try:
+                    title = post['title']
+                    body = post['selftext'] if post['selftext'] is not None else ''
+                    if title not in titles:
+                        titles.add(title)
+                        yield(title + '\n')
+                        yield(body + '\n')
+                except Exception as e:
+                    print(e)
             iteration = iteration + 1
 
     elif data_type == 'comment':
@@ -56,7 +132,10 @@ def get_user_text(username, period=None, data_type='stats'):
             if len(r) == 0:
                 break
             for comment in r:
-                yield(comment['body'])
+                try:
+                    yield(comment['body'] + '\n')
+                except Exception as e:
+                    print(e)                
             iteration = iteration + 1
 
 
@@ -65,7 +144,8 @@ def download_file(url, outputFile):
         with open(outputFile, 'wb') as f:
             shutil.copyfileobj(r.raw, f)
 
-#u/jackacooper's code
+
+#  u/jackacooper's code
 def get_user_media(username, period=None, save_loc='users/'):
     iteration = 1
     posts = dict()
@@ -85,10 +165,10 @@ def get_user_media(username, period=None, save_loc='users/'):
         if len(r) == 0:
             break
         for post in r:
-          posts[post['title']] = post['url']
+            posts[post['title']] = post['url']
         iteration = iteration + 1
 
-    directory = save_loc + username
+    directory = save_loc + username + '/' + username
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -102,7 +182,7 @@ def get_user_media(username, period=None, save_loc='users/'):
             elif 'youtube.com' in rawUrl:
                 pass
             elif 'gfycat' in rawUrl:
-                name =  rawUrl.split('/')[-1]
+                name = rawUrl.split('/')[-1]
                 g = requests.get('https://api.gfycat.com/v1/gfycats/' + name)
                 urls[g.json()['gfyItem']['mp4Url']] = 'mp4'
             elif 'imgur.com/a/' in rawUrl:
@@ -112,7 +192,7 @@ def get_user_media(username, period=None, save_loc='users/'):
                 j = json.loads(re.findall('(?<=image               : ).*', g.text)[0].rstrip(','))
                 c = 1
                 for i in j['album_images']['images']:
-                    urls['https://i.imgur.com/' + i['hash'] + i['ext']] =  str(c) + i['ext']
+                    urls['https://i.imgur.com/' + i['hash'] + i['ext']] = str(c) + i['ext']
                     c = c + 1
             elif 'imgur.com' in rawUrl and 'gifv' in rawUrl:
                 # Prevent trying downloading invalid formats, could also download gif
@@ -149,5 +229,11 @@ def get_user_media(username, period=None, save_loc='users/'):
     return save_loc + path
 
 
+user_media = partial(save_user, period=None, save_loc='users/', tosave=['media'])
+user_text = partial(save_user, period=None, save_loc='users/', tosave=['submission', 'comment'])
+all_stats = partial(save_user, period=None, save_loc='users/', tosave=['subreddit', 'time'])
+thirty_stats = partial(save_user, period=30, save_loc='users/', tosave=['subreddit', 'time'])
+
+
 if __name__ == '__main__':
-    pass
+    thirty_stats('opiumzxq')
