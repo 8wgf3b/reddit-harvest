@@ -105,3 +105,6 @@ venv.bak/
 
 users/*
 !users/.gitkeep
+users/u_*
+!users/.gitkeep
+!users/r_*

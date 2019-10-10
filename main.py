@@ -1,6 +1,7 @@
 from tqdm import tqdm
 from mining import all_stats, thirty_stats
 from mining import recent_authors, top_authors_avg, top_authors_sum
+from mining import save_output as graph_output
 from time import sleep
 import sys
 
@@ -22,4 +23,7 @@ def mine(type, limit=500, subreddit=None):
 
 if __name__ == '__main__':
     arg = sys.argv
-    mine(*arg[1:])
+    try:
+        mine(*arg[1:])
+    except KeyError:
+        graph_output(*arg[1:])
