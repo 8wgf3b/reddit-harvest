@@ -1,13 +1,10 @@
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import pylab
 import numpy as np
-import seaborn as sns
 import os
 from tqdm import tqdm
 from sklearn.preprocessing import minmax_scale
-import pickle
 
 
 def raw_matrix(data_loc='users/', period=None):
