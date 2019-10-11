@@ -42,14 +42,7 @@ def AGM_matrix(raw_df, node_type='u', norm=None):
         raw_matrix = modified_min_max_scaler(raw_matrix, norm)
     if node_type == 'r':
         raw_matrix = raw_matrix.T
-    size = raw_matrix.shape[1]
-    sim_matrix = np.zeros((size, size), dtype='float')
-    for i in tqdm(range(size - 1)):
-        for j in range(i, size):
-            u = raw_matrix[:, i]
-            v = raw_matrix[:, j]
-            sim_matrix[i, j] = 1 - np.exp(-u@v)
-            sim_matrix[j, i] = sim_matrix[i, j]
+    sim_matrix = 1 - np.exp(- raw_matrix.T @ raw_matrix)
     column_names = users_list if node_type == 'u' else subs_list
     return pd.DataFrame(data=sim_matrix, index=column_names, columns=column_names)
 
