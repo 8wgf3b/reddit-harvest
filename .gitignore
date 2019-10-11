@@ -108,3 +108,4 @@ users/*
 outputs/u_*
 !outputs/.gitkeep
 !outputs/r_*
+users.zip
