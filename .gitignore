@@ -103,8 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-users/*
-!users/.gitkeep
+users/
 outputs/u_*
 !outputs/.gitkeep
 !outputs/r_*

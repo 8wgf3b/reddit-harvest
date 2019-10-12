@@ -135,7 +135,7 @@ def get_user_text(username, period=None, data_type='submission'):
                 try:
                     yield(comment['body'] + '\n')
                 except Exception as e:
-                    print(e)                
+                    print(e)
             iteration = iteration + 1
 
 
@@ -231,8 +231,8 @@ def get_user_media(username, period=None, save_loc='users/'):
 
 user_media = partial(save_user, period=None, save_loc='users/', tosave=['media'])
 user_text = partial(save_user, period=None, save_loc='users/', tosave=['submission', 'comment'])
-all_stats = partial(save_user, period=None, save_loc='users/', tosave=['subreddit', 'time'])
-thirty_stats = partial(save_user, period=30, save_loc='users/', tosave=['subreddit', 'time'])
+all_stats = partial(save_user, period=None, save_loc='users/', tosave=['subreddit'])
+thirty_stats = partial(save_user, period=30, save_loc='users/', tosave=['subreddit'])
 
 
 if __name__ == '__main__':
