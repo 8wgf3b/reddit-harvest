@@ -1,0 +1,5 @@
+Created a matrix with rows as users, column as subs.
+Values are activity for user in corresponding subs as calculated by rr
+Did SVD for this matrix.
+Tried euclid distance for getting closest subs/users.
+For running this there must be a folder "users" in same directory. It contains one folder per user.
