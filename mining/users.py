@@ -236,4 +236,4 @@ thirty_stats = partial(save_user, period=30, save_loc='users/', tosave=['subredd
 
 
 if __name__ == '__main__':
-    thirty_stats('opiumzxq')
+    pass
