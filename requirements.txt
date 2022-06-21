@@ -3,6 +3,6 @@ tqdm==4.35.0
 praw==6.2.0
 networkx==2.2
 pandas==0.24.2
-numpy==1.16.2
+numpy==1.22.0
 scikit-learn==0.20.3
 matplotlib==3.0.3
