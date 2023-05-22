@@ -1,4 +1,4 @@
-requests==2.21.0
+requests==2.31.0
 tqdm==4.35.0
 praw==6.2.0
 networkx==2.2
